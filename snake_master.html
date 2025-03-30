@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🍎 Snake Master 🍎</title>
+  <meta charset="UTF-8">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body {
+      background: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Arial', sans-serif;
+    }
+
+    #game-container {
+      position: relative;
+      width: 400px;
+      height: 400px;
+    }
+
+    canvas {
+      border: 1px solid white;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    #start-screen {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.7);
+      transition: opacity 0.5s;
+    }
+
+    #game-title {
+      font-size: 36px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px #00ff00;
+      animation: pulse 1.5s infinite;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      font-size: 18px;
+      background: #00aa00;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+      margin: 10px 0;
+    }
+
+    .btn:hover {
+      transform: scale(1.1);
+      background: #00ff00;
+    }
+
+    #level-display, #score-display, #lives-display {
+      position: absolute;
+      color: white;
+      font-size: 16px;
+      z-index: 5;
+      text-shadow: 1px 1px 2px black;
+    }
+
+    #level-display {
+      top: 10px;
+      left: 10px;
+    }
+
+    #score-display {
+      top: 10px;
+      right: 10px;
+    }
+
+    #lives-display {
+      top: 30px; /* Adjust as needed */
+      left: 10px;
+    }
+
+    #game-over, #info-screen, #pause-screen, #win-screen, #level-transition {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      z-index: 15;
+      background-color: rgba(0, 0, 0, 0.9);
+      overflow-y: auto;
+      padding: 20px;
+      box-sizing: border-box;
+      animation: fadeIn 0.5s;
+    }
+
+    #info-screen {
+      text-align: left;
+      justify-content: flex-start;
+    }
+
+    #info-screen h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    #info-screen h3 {
+      margin: 15px 0 5px 0;
+      color: #00ff00;
+    }
+
+    #info-screen ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    #info-screen p {
+      margin: 5px 0;
+    }
+
+    #pause-screen h2 {
+      margin-bottom: 20px;
+    }
+
+    #win-screen {
+      background-color: rgba(0, 100, 0, 0.9);
+    }
+
+    #win-screen h2 {
+      font-size: 40px;
+      color: gold;
+      text-shadow: 0 0 20px white;
+    }
+
+    #win-screen p {
+      font-size: 20px;
+    }
+
+    .obstacle {
+      position: absolute;
+      background-color: #663399;
+      border: 1px solid #9966CC;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.1);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 1s;
+    }
+  </style>
+</head>
+<body>
+<div id="game-container">
+  <canvas width="400" height="400" id="background"></canvas>
+  <canvas width="400" height="400" id="game"></canvas>
+
+  <div id="level-display">Level: 1</div>
+  <div id="score-display">Score: 0</div>
+  <div id="lives-display">Lives: 100</div>
+
+  <div id="start-screen">
+    <h1 id="game-title">SNAKE MASTER</h1>
+    <p>Navigate through increasing difficulties and obstacles</p>
+    <button id="start-btn" class="btn">START GAME</button>
+    <button id="info-btn" class="btn">GAME INFO</button>
+  </div>
+
+  <div id="game-over">
+    <h2>GAME OVER</h2>
+    <p id="final-score">Your score: 0</p>
+    <p id="final-level">Level reached: 1</p>
+    <div class="button-container">
+      <button id="restart-btn" class="btn">PLAY AGAIN</button>
+      <button id="menu-btn" class="btn">MAIN MENU</button>
+    </div>
+  </div>
+
+  <div id="pause-screen">
+    <h2>GAME PAUSED</h2>
+    <div class="button-container">
+      <button id="resume-btn" class="btn">RESUME</button>
+      <button id="menu-btn-pause" class="btn">MAIN MENU</button>
+    </div>
+  </div>
+
+  <div id="info-screen">
+    <h2>GAME INFORMATION</h2>
+
+    <h3>Objective</h3>
+    <p>Guide the snake to eat apples and grow longer while avoiding obstacles, walls, and your own tail.</p>
+
+    <h3>Levels</h3>
+    <p>The game has 6 distinct levels with increasing difficulty:</p>
+    <ul>
+      <li><strong>Level 1:</strong> Basic snake gameplay with no obstacles</li>
+      <li><strong>Level 2:</strong> Vertical wall obstacles appear</li>
+      <li><strong>Level 3:</strong> Horizontal walls added and edge wrapping removed</li>
+      <li><strong>Level 4:</strong> Corner obstacles appear</li>
+      <li><strong>Level 5:</strong> Maze-like patterns added</li>
+      <li><strong>Level 6+:</strong> Random obstacles increase with each level</li>
+    </ul>
+
+    <h3>Controls</h3>
+    <ul>
+      <li><strong>Arrow Keys</strong> or <strong>WASD</strong>: Move the snake</li>
+      <li><strong>P</strong>: Pause/Resume game</li>
+      <li><strong>ESC</strong>: Return to menu (while playing)</li>
+    </ul>
+
+    <h3>Special Items</h3>
+    <ul>
+      <li><strong>Red Apple:</strong> Regular food, adds 1 to snake length</li>
+      <li><strong>Golden Orb:</strong> Special food, adds 3 to snake length and gives bonus points</li>
+    </ul>
+
+    <h3>Scoring</h3>
+    <p>Regular apples: 10 × current level points<br>
+      Golden orbs: Increases size of the snake<br>
+      Level up when score reaches level × 100</p>
+
+    <h3>About the Developer</h3>
+    <p>This game was developed by Sarah Akhtar. My passion is developing technologies that are fun and interative.</p>
+    <p>Made with ❤️ by Sarah Akhtar</p>
+
+    <button id="info-back-btn" class="btn">BACK TO MENU</button>
+  </div>
+
+  <div id="win-screen">
+    <h2>YOU WIN!</h2>
+    <p>Congratulations! You reached level 100 and beat the game!</p>
+    <button id="menu-btn-win" class="btn">MAIN MENU</button>
+  </div>
+
+  <div id="level-transition">
+    <h2>LEVEL UP!</h2>
+    <p id="transition-level">Preparing Level: 2</p>
+  </div>
+</div>
+
+<script>
+  // Background canvas for color animations
+  var bgCanvas = document.getElementById('background');
+  var bgContext = bgCanvas.getContext('2d');
+
+  // Game canvas
+  var canvas = document.getElementById('game');
+  var context = canvas.getContext('2d');
+
+  // UI elements
+  var startScreen = document.getElementById('start-screen');
+  var startBtn = document.getElementById('start-btn');
+  var infoBtn = document.getElementById('info-btn');
+  var infoScreen = document.getElementById('info-screen');
+  var infoBackBtn = document.getElementById('info-back-btn');
+  var gameOverScreen = document.getElementById('game-over');
+  var restartBtn = document.getElementById('restart-btn');
+  var menuBtn = document.getElementById('menu-btn');
+  var menuBtnPause = document.getElementById('menu-btn-pause');
+  var menuBtnWin = document.getElementById('menu-btn-win');
+  var levelDisplay = document.getElementById('level-display');
+  var scoreDisplay = document.getElementById('score-display');
+  var livesDisplay = document.getElementById('lives-display');
+  var finalScore = document.getElementById('final-score');
+  var finalLevel = document.getElementById('final-level');
+  var pauseScreen = document.getElementById('pause-screen');
+  var resumeBtn = document.getElementById('resume-btn');
+  var winScreen = document.getElementById('win-screen');
+  var levelTransitionScreen = document.getElementById('level-transition');
+  var transitionLevelDisplay = document.getElementById('transition-level');
+
+  // Game variables
+  var grid = 16;
+  var count = 0;
+  var score = 0;
+  var level = 1;
+  var gameSpeed = 14; // Higher = slower (adjusted to be slower)
+  var baseGameSpeed = 7; // Base speed that will decrease slightly with levels
+  var gameActive = false;
+  var gameIsPaused = false;
+  var obstacles = [];
+  var currentObstacles = []; // Store obstacles for the current level
+  var specialFoods = [];
+  var backgroundHue = 0;
+  let savedGameState = null;
+  let lives = 100; // Initialize lives
+
+  // Snake object
+  var snake = {
+    x: 160,
+    y: 160,
+    dx: grid,
+    dy: 0,
+    cells: [],
+    maxCells: 4
+  };
+
+  // Apple object
+  var apple = {
+    x: 320,
+    y: 320,
+    value: 1
+  };
+
+  // Special food that appears occasionally
+  var specialFood = {
+    x: -1,
+    y: -1,
+    value: 3,
+    active: false,
+    timer: 0,
+    maxTime: 150 // Will disappear after this many frames
+  };
+
+  // Get random whole numbers in a specific range
+  function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min)) + min;
+  }
+
+  // Check if position overlaps with snake
+  function checkSnakeCollision(x, y) {
+    for (var i = 0; i < snake.cells.length; i++) {
+      if (snake.cells[i].x === x && snake.cells[i].y === y) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Check if position overlaps with obstacles
+  function checkObstacleCollision(x, y, obstacleList) {
+    obstacleList = obstacleList || obstacles;
+    for (var i = 0; i < obstacleList.length; i++) {
+      if (x >= obstacleList[i].x &&
+          x < obstacleList[i].x + obstacleList[i].width &&
+          y >= obstacleList[i].y &&
+          y < obstacleList[i].y + obstacleList[i].height) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Find a safe position for items that doesn't overlap with snake or obstacles
+  function getSafePosition(obstacleList) {
+    obstacleList = obstacleList || obstacles;
+    var x, y;
+    do {
+      x = getRandomInt(0, 25) * grid;
+      y = getRandomInt(0, 25) * grid;
+    } while (checkSnakeCollision(x, y) || checkObstacleCollision(x, y, obstacleList));
+
+    return {x, y};
+  }
+
+  // Set up level obstacles
+  function setupLevel() {
+    obstacles = [];
+
+    // Clear any existing obstacles
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Adjust game speed based on level (but keep it more manageable)
+    gameSpeed = Math.max(4, baseGameSpeed - Math.floor(level / 50));
+
+    // Update level display
+    levelDisplay.textContent = 'Level: ' + level;
+
+    // Add obstacles based on level
+    if (level >= 2) {
+      // Level 2: Add two vertical walls
+      var wallX = getRandomInt(5, 20) * grid;
+      obstacles.push({
+        x: wallX,
+        y: 0,
+        width: grid,
+        height: canvas.height / 2 - grid * 3 // Make gap bigger
+      });
+
+      obstacles.push({
+        x: wallX,
+        y: canvas.height / 2 + grid * 3, // Make gap bigger
+        width: grid,
+        height: canvas.height / 2 - grid * 3
+      });
+    }
+
+    if (level >= 3) {
+      // Level 3: Add horizontal walls
+      var wallY = getRandomInt(5, 20) * grid;
+      obstacles.push({
+        x: 0,
+        y: wallY,
+        width: canvas.width / 2 - grid * 3, // Make gap bigger
+        height: grid
+      });
+
+      obstacles.push({
+        x: canvas.width / 2 + grid * 3, // Make gap bigger
+        y: wallY,
+        width: canvas.width / 2 - grid * 3,
+        height: grid
+      });
+    }
+
+    if (level >= 4) {
+      // Level 4: Add corner obstacles (smaller than before)
+      var size = 2 * grid; // Reduced size
+      obstacles.push({
+        x: grid * 2,
+        y: grid * 2,
+        width: size,
+        height: size
+      });
+
+      obstacles.push({
+        x: canvas.width - size - grid * 2,
+        y: grid * 2,
+        width: size,
+        height: size
+      });
+
+      obstacles.push({
+        x: grid * 2,
+        y: canvas.height - size - grid * 2,
+        width: size,
+        height: size
+      });
+
+      obstacles.push({
+        x: canvas.width - size - grid * 2,
+        y: canvas.height - size - grid * 2,
+        width: size,
+        height: size
+      });
+    }
+
+    if (level >= 5) {
+      // Level 5: Add a maze-like pattern (fewer obstacles)
+      var mazeSize = grid * 2;
+      for (var i = 0; i < 2; i++) { // Reduced number
+        var x = getRandomInt(4, 22) * grid;
+        var y = getRandomInt(4, 22) * grid;
+
+        obstacles.push({
+          x: x,
+          y: y,
+          width: mazeSize,
+          height: mazeSize
+        });
+      }
+    }
+
+    if (level >= 6) {
+      // Level 6+: Add more random obstacles as level increases (but fewer)
+      var numObstacles = Math.min(3, Math.floor((level - 5) / 2) + 1); // Slower progression
+      for (var i = 0; i < numObstacles; i++) {
+        var obstacleWidth = getRandomInt(1, 3) * grid; // Smaller
+        var obstacleHeight = getRandomInt(1, 3) * grid; // Smaller
+        var position = getSafePosition();
+
+        obstacles.push({
+          x: position.x,
+          y: position.y,
+          width: obstacleWidth,
+          height: obstacleHeight
+        });
+      }
+    }
+
+    currentObstacles = obstacles.slice(); // Copy obstacles
+
+    // Place the apple in a safe location
+    var safePos = getSafePosition();
+    apple.x = safePos.x;
+    apple.y = safePos.y;
+  }
+
+  // Show info screen
+  function showInfo() {
+    startScreen.style.display = 'none';
+    infoScreen.style.display = 'flex';
+    infoScreen.classList.add('fade-in');
+  }
+
+  // Return to main menu
+  function returnToMenu() {
+    // Hide all screens
+    gameOverScreen.style.display = 'none';
+    gameOverScreen.classList.remove('fade-in');
+    infoScreen.style.display = 'none';
+    infoScreen.classList.remove('fade-in');
+    pauseScreen.style.display = 'none';
+    pauseScreen.classList.remove('fade-in');
+    winScreen.style.display = 'none';
+    winScreen.classList.remove('fade-in');
+    levelTransitionScreen.style.display = 'none';
+    levelTransitionScreen.classList.remove('fade-in');
+
+    // Show start screen
+    startScreen.style.display = 'flex';
+    startScreen.style.opacity = '1';
+
+    // Reset game state
+    gameActive = false;
+    gameIsPaused = false;
+    level = 1;
+    gameSpeed = baseGameSpeed; // Reset game speed
+    lives = 100; // Reset lives
+
+    // Reset snake position and size
+    snake.x = 160;
+    snake.y = 160;
+    snake.cells = [];
+    snake.maxCells = 4;
+    snake.dx = grid;
+    snake.dy = 0;
+
+    updateLivesDisplay();
+  }
+
+  // Start the game
+  function startGame() {
+    startScreen.style.opacity = '0';
+    setTimeout(function () {
+      startScreen.style.display = 'none';
+    }, 500);
+
+    // Reset variables
+    score = 0;
+    level = 1;
+    snake.x = 160;
+    snake.y = 160;
+    snake.cells = [];
+    snake.maxCells = 4;
+    snake.dx = grid;
+    snake.dy = 0;
+    gameSpeed = baseGameSpeed; // Reset game speed
+    lives = 100; // Reset lives
+
+    scoreDisplay.textContent = 'Score: ' + score;
+    levelDisplay.textContent = 'Level: ' + level;
+    updateLivesDisplay();
+
+    setupLevel();
+
+    // Play start animation
+    animateStart();
+
+    gameActive = true;
+
+    // Start the game loop
+    requestAnimationFrame(loop);
+  }
+
+  // Animate the start of the game
+  function animateStart() {
+    // Flash the background
+    var flashes = 0;
+    var flashInterval = setInterval(function () {
+      if (flashes % 2 === 0) {
+        bgContext.fillStyle = 'white';
+      } else {
+        bgContext.fillStyle = 'black';
+      }
+      bgContext.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+      flashes++;
+      if (flashes >= 6) {
+        clearInterval(flashInterval);
+      }
+    }, 100);
+  }
+
+  // End the game
+  function endGame() {
+    gameActive = false;
+
+    finalScore.textContent = 'Your score: ' + score;
+    finalLevel.textContent = 'Level reached: ' + level;
+
+    gameOverScreen.style.display = 'flex';
+    gameOverScreen.classList.add('fade-in');
+  }
+
+  // Restart the game
+  function restartGame() {
+    gameOverScreen.style.display = 'none';
+    gameOverScreen.classList.remove('fade-in');
+
+    startGame();
+  }
+
+  // Animate the background
+  function animateBackground() {
+    // Create a gradient based on a changing hue
+    backgroundHue = (backgroundHue + 0.3) % 360; // Slower color change
+
+    var gradient = bgContext.createLinearGradient(0, 0, bgCanvas.width, bgCanvas.height);
+    gradient.addColorStop(0, 'hsl(' + backgroundHue + ', 50%, 10%)');
+    gradient.addColorStop(1, 'hsl(' + ((backgroundHue + 180) % 360) + ', 50%, 10%)');
+
+    bgContext.fillStyle = gradient;
+    bgContext.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+    // Add some animated particles based on level (fewer)
+    if (level > 1) {
+      bgContext.fillStyle = 'rgba(255, 255, 255, 0.1)';
+      for (var i = 0; i < level; i++) { // Fewer particles
+        var x = getRandomInt(0, bgCanvas.width);
+        var y = getRandomInt(0, bgCanvas.height);
+        var size = getRandomInt(1, 3);
+
+        bgContext.beginPath();
+        bgContext.arc(x, y, size, 0, Math.PI * 2);
+        bgContext.fill();
+      }
+    }
+  }
+
+  //pause function
+  function pauseGame() {
+    if (gameActive && !gameIsPaused) {
+      gameIsPaused = true;
+      pauseScreen.style.display = 'flex';
+      pauseScreen.classList.add('fade-in');
+      saveGameState();
+    }
+  }
+
+  //resume game function
+  function resumeGame() {
+    if (gameIsPaused) {
+      gameIsPaused = false;
+      pauseScreen.style.display = 'none';
+      pauseScreen.classList.remove('fade-in');
+      restoreGameState();
+    }
+  }
+
+  // Save game state
+  function saveGameState() {
+    savedGameState = {
+      snake: {
+        x: snake.x,
+        y: snake.y,
+        dx: snake.dx,
+        dy: snake.dy,
+        cells: snake.cells,
+        maxCells: snake.maxCells
+      },
+      apple: {
+        x: apple.x,
+        y: apple.y
+      },
+      specialFood: {
+        x: specialFood.x,
+        y: specialFood.y,
+        active: specialFood.active,
+        timer: specialFood.timer
+      },
+      score: score,
+      level: level,
+      gameSpeed: gameSpeed,
+      currentObstacles: currentObstacles, // Save current obstacle layout
+      backgroundHue: backgroundHue,
+      lives: lives
+    };
+  }
+
+  // Restore game state
+  function restoreGameState() {
+    if (savedGameState) {
+      snake.x = savedGameState.snake.x;
+      snake.y = savedGameState.snake.y;
+      snake.dx = savedGameState.snake.dx;
+      snake.dy = savedGameState.snake.dy;
+      snake.cells = savedGameState.snake.cells;
+      snake.maxCells = savedGameState.snake.maxCells;
+      apple.x = savedGameState.apple.x;
+      apple.y = savedGameState.apple.y;
+      specialFood.x = savedGameState.specialFood.x;
+      specialFood.y = savedGameState.specialFood.y;
+      specialFood.active = savedGameState.specialFood.active;
+      specialFood.timer = savedGameState.specialFood.timer;
+      score = savedGameState.score;
+      level = savedGameState.level;
+      gameSpeed = savedGameState.gameSpeed;
+      currentObstacles = savedGameState.currentObstacles; // Restore current obstacle layout
+      backgroundHue = savedGameState.backgroundHue;
+      lives = savedGameState.lives;
+
+      scoreDisplay.textContent = 'Score: ' + score;
+      levelDisplay.textContent = 'Level: ' + level;
+      updateLivesDisplay();
+    }
+  }
+
+  // Function to handle winning the game
+  function winGame() {
+    gameActive = false;
+    winScreen.style.display = 'flex';
+    winScreen.classList.add('fade-in');
+  }
+
+  // Function to update the lives display
+  function updateLivesDisplay() {
+    livesDisplay.textContent = 'Lives: ' + lives;
+  }
+
+  // Function to show level transition screen
+  function showLevelTransition() {
+    gameActive = false;
+    transitionLevelDisplay.textContent = 'Preparing Level: ' + (level);
+    levelTransitionScreen.style.display = 'flex';
+    levelTransitionScreen.classList.add('fade-in');
+
+    setTimeout(function () {
+      levelTransitionScreen.style.display = 'none';
+      levelTransitionScreen.classList.remove('fade-in');
+      setupLevel();
+
+      // Ensure the snake doesn't spawn on an obstacle after the level transition
+      let safePosition = getSafePosition(currentObstacles);
+      snake.x = safePosition.x;
+      snake.y = safePosition.y;
+      // snake.cells = [];
+      // snake.maxCells = 4;
+
+      gameActive = true;
+    }, 1000); // Display for 2 seconds (adjust as needed)
+  }
+
+  // Game loop
+  function loop() {
+    requestAnimationFrame(loop);
+
+    if (!gameActive || gameIsPaused) {
+      return;
+    }
+
+    // Slow game loop based on level
+    if (++count < gameSpeed) {
+      return;
+    }
+
+    count = 0;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Animate the background
+    animateBackground();
+
+    // Move snake by its velocity
+    snake.x += snake.dx;
+    snake.y += snake.dy;
+
+    // Handle snake wrapping based on level
+    if (level < 3) {
+      // Levels 1-2: Wrap snake position on edge of screen
+      if (snake.x < 0) {
+        snake.x = canvas.width - grid;
+      } else if (snake.x >= canvas.width) {
+        snake.x = 0;
+      }
+
+      if (snake.y < 0) {
+        snake.y = canvas.height - grid;
+      } else if (snake.y >= canvas.height) {
+        snake.y = 0;
+      }
+    } else {
+      // Levels 3+: Hitting edge should not cause game over
+      if (snake.x < 0) {
+        snake.x = canvas.width - grid;  // Wrap to the opposite side
+      } else if (snake.x >= canvas.width) {
+        snake.x = 0;                  // Wrap to the opposite side
+      }
+
+      if (snake.y < 0) {
+        snake.y = canvas.height - grid; // Wrap to the opposite side
+      } else if (snake.y >= canvas.height) {
+        snake.y = 0;                   // Wrap to the opposite side
+      }
+    }
+
+    // Keep track of where snake has been. Front of the array is always the head
+    snake.cells.unshift({x: snake.x, y: snake.y});
+
+    // Remove cells as we move away from them
+    if (snake.cells.length > snake.maxCells) {
+      snake.cells.pop();
+    }
+
+    // Check obstacle collision
+    for (var i = 0; i < currentObstacles.length; i++) {
+      if (snake.x >= currentObstacles[i].x &&
+          snake.x < currentObstacles[i].x + currentObstacles[i].width &&
+          snake.y >= currentObstacles[i].y &&
+          snake.y < currentObstacles[i].y + currentObstacles[i].height) {
+        loseLife();
+        return;
+      }
+
+      // Draw obstacle
+      context.fillStyle = '#663399';
+      context.fillRect(currentObstacles[i].x, currentObstacles[i].y, currentObstacles[i].width, currentObstacles[i].height);
+      context.strokeStyle = '#9966CC';
+      context.strokeRect(currentObstacles[i].x, currentObstacles[i].y, currentObstacles[i].width, currentObstacles[i].height);
+    }
+
+    // Draw regular apple
+    context.fillStyle = 'red';
+    context.fillRect(apple.x, apple.y, grid - 1, grid - 1);
+
+    // Handle special food
+    if (specialFood.active) {
+      // Draw special food
+      context.fillStyle = 'gold';
+      context.beginPath();
+      context.arc(specialFood.x + grid / 2, specialFood.y + grid / 2, grid / 2, 0, 2 * Math.PI);
+      context.fill();
+
+      specialFood.timer--;
+      if (specialFood.timer <= 0) {
+        specialFood.active = false;
+        specialFood.x = -1;
+        specialFood.y = -1;
+      }
+    }
+
+    // Snake collision with apple
+    if (snake.x === apple.x && snake.y === apple.y) {
+      score += 25;
+      snake.maxCells++;
+      scoreDisplay.textContent = 'Score: ' + score;
+
+      // Check if it's time to level up
+      if (score >= level * 100) {
+        level++;
+
+        if (level <= 100) {
+          showLevelTransition(); // Show level transition screen
+        }
+        levelDisplay.textContent = 'Level: ' + level;
+
+        // Activate special food randomly based on level
+        if (level > 3 && Math.random() < 0.3) {
+          var safePos = getSafePosition(currentObstacles);
+          specialFood.x = safePos.x;
+          specialFood.y = safePos.y;
+          specialFood.active = true;
+          specialFood.timer = specialFood.maxTime;
+        }
+
+        // Check for win condition
+        if (level >= 100) {
+          winGame();
+          return;
+        }
+      } else {
+        var safePos = getSafePosition(currentObstacles);
+        apple.x = safePos.x;
+        apple.y = safePos.y;
+      }
+    }
+
+    // Snake collision with special food
+    if (snake.x === specialFood.x && snake.y === specialFood.y && specialFood.active) {
+      score += 25;
+      snake.maxCells += 3;
+      scoreDisplay.textContent = 'Score: ' + score;
+      specialFood.active = false;
+      specialFood.x = -1;
+      specialFood.y = -1;
+    }
+
+    // Check collision with all cells of snake (except the head)
+    for (var i = 1; i < snake.cells.length; i++) {
+      if (snake.x === snake.cells[i].x && snake.y === snake.cells[i].y) {
+        loseLife();
+        return;
+      }
+    }
+
+    // Draw snake
+    context.fillStyle = 'green';
+    for (var i = 0; i < snake.cells.length; i++) {
+      context.fillRect(snake.cells[i].x, snake.cells[i].y, grid - 1, grid - 1);
+    }
+  }
+
+  // Function to handle losing a life
+  function loseLife() {
+    lives--;
+    updateLivesDisplay();
+
+    if (lives <= 0) {
+      endGame();
+    } else {
+      // Reset snake position and length (optional)
+      let safePosition = getSafePosition(currentObstacles);
+      snake.x = safePosition.x;
+      snake.y = safePosition.y;
+      // snake.cells = [];
+      // snake.maxCells = 4;
+      snake.dx = grid;
+      snake.dy = 0;
+
+      //Get a safe position for the apple.
+      let safePos = getSafePosition(currentObstacles);
+      apple.x = safePos.x;
+      apple.y = safePos.y;
+      // You might also want to reset the level or other game state elements
+      // setupLevel(); //No longer need this if you want map to stay the same.
+    }
+  }
+
+  // Listen to keyboard events to move the snake
+  document.addEventListener('keydown', function (e) {
+    // left arrow key or 'a'
+    if ((e.which === 37 || e.which === 65) && snake.dx === 0) {
+      snake.dx = -grid;
+      snake.dy = 0;
+    }
+    // up arrow key or 'w'
+    else if ((e.which === 38 || e.which === 87) && snake.dy === 0) {
+      snake.dy = -grid;
+      snake.dx = 0;
+    }
+    // right arrow key or 'd'
+    else if ((e.which === 39 || e.which === 68) && snake.dx === 0) {
+      snake.dx = grid;
+      snake.dy = 0;
+    }
+  // down arrow key or 's'
+  else if ((e.which === 40 || e.which === 83) && snake.dy === 0) {
+    snake.dy = grid;
+    snake.dx = 0;
+  }
+  // 'p' key for pause
+  else if (e.which === 80) {
+    if (gameActive) {
+      if (gameIsPaused) {
+        resumeGame();
+      } else {
+        pauseGame();
+      }
+    }
+  }
+  // 'esc' key for menu
+    else if (e.which === 27) {
+        if (gameActive) {
+            if (!gameIsPaused) {
+                pauseGame();
+            }
+            returnToMenu();
+        }
+    }
+});
+
+// Start button click event
+startBtn.addEventListener('click', startGame);
+
+// Info button click event
+infoBtn.addEventListener('click', showInfo);
+
+// Info back button click event
+infoBackBtn.addEventListener('click', returnToMenu);
+
+// Restart button click event
+restartBtn.addEventListener('click', restartGame);
+
+// Menu button click event
+menuBtn.addEventListener('click', returnToMenu);
+
+// Menu button click event (pause screen)
+menuBtnPause.addEventListener('click', returnToMenu);
+
+// Resume button click event
+resumeBtn.addEventListener('click', resumeGame);
+
+// Menu button click event (win screen)
+menuBtnWin.addEventListener('click', returnToMenu);
+</script>
+</body>
+</html>
