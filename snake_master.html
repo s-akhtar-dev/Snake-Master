@@ -311,6 +311,14 @@
   var levelTransitionScreen = document.getElementById('level-transition');
   var transitionLevelDisplay = document.getElementById('transition-level');
 
+  // Sound effects
+  const eatSound = new Audio('eatSound.mp3');
+  const loseLifeSound = new Audio('loseLifeSound.mp3');
+  const buttonSound = new Audio('buttonSound.mp3');
+  const backgroundMusic = new Audio('backgroundMusic.mp3');
+  backgroundMusic.loop = true;
+  backgroundMusic.volume = 0.5;
+
   // Game variables
   var grid = 16;
   var count = 0;
@@ -523,6 +531,7 @@
     startScreen.style.display = 'none';
     infoScreen.style.display = 'flex';
     infoScreen.classList.add('fade-in');
+    buttonSound.play();
   }
 
   // Return to main menu
@@ -549,6 +558,8 @@
     level = 1;
     gameSpeed = baseGameSpeed; // Reset game speed
     lives = 100; // Reset lives
+    backgroundMusic.pause();
+    backgroundMusic.currentTime = 0;
 
     // Reset snake position and size
     snake.x = 160;
@@ -559,6 +570,7 @@
     snake.dy = 0;
 
     updateLivesDisplay();
+    buttonSound.play();
   }
 
   // Start the game
@@ -579,6 +591,7 @@
     snake.dy = 0;
     gameSpeed = baseGameSpeed; // Reset game speed
     lives = 100; // Reset lives
+    backgroundMusic.play();
 
     scoreDisplay.textContent = 'Score: ' + score;
     levelDisplay.textContent = 'Level: ' + level;
@@ -588,6 +601,7 @@
 
     // Play start animation
     animateStart();
+    buttonSound.play();
 
     gameActive = true;
 
@@ -617,6 +631,8 @@
   // End the game
   function endGame() {
     gameActive = false;
+    backgroundMusic.pause();
+    backgroundMusic.currentTime = 0;
 
     finalScore.textContent = 'Your score: ' + score;
     finalLevel.textContent = 'Level reached: ' + level;
@@ -631,6 +647,7 @@
     gameOverScreen.classList.remove('fade-in');
 
     startGame();
+    buttonSound.play();
   }
 
   // Animate the background
@@ -872,6 +889,7 @@
 
     // Snake collision with apple
     if (snake.x === apple.x && snake.y === apple.y) {
+      eatSound.play()
       score += 25;
       snake.maxCells++;
       scoreDisplay.textContent = 'Score: ' + score;
@@ -908,6 +926,7 @@
 
     // Snake collision with special food
     if (snake.x === specialFood.x && snake.y === specialFood.y && specialFood.active) {
+      eatSound.play();
       score += 25;
       snake.maxCells += 3;
       scoreDisplay.textContent = 'Score: ' + score;
@@ -935,6 +954,7 @@
   function loseLife() {
     lives--;
     updateLivesDisplay();
+    loseLifeSound.play();
 
     if (lives <= 0) {
       endGame();
@@ -984,8 +1004,10 @@
     if (gameActive) {
       if (gameIsPaused) {
         resumeGame();
+        backgroundMusic.play();
       } else {
         pauseGame();
+        backgroundMusic.pause();
       }
     }
   }
